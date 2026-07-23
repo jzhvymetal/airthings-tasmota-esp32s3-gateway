@@ -1,0 +1,6 @@
+name: Airthings ESP32 BLE Gateway
+packageKey: airthings-esp32-ble-gateway
+description: Local LAN integration for the Airthings Tasmota ESP32-S3 gateway
+permissions:
+  lan: {}
+  discovery: {}

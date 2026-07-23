@@ -27,7 +27,7 @@ import persist
 import json
 
 class Airthings2930 : Driver
-  static DRIVER_VERSION = "2.1.0"
+  static DRIVER_VERSION = "2.2.0"
   static CONFIG_VERSION = 3
   static SVC_UUID = "b42e1c08-ade7-11e4-89d3-123b93f75cba"
   static DATA_UUID = "b42e2a68-ade7-11e4-89d3-123b93f75cba"
@@ -931,6 +931,7 @@ class Airthings2930 : Driver
   def web_add_handler()
     webserver.on("/airthings", /->self.page_airthings())
     webserver.on("/airthings_api", /->self.page_airthings_api())
+    webserver.on("/airthings_devices", /->self.page_airthings_devices())
     webserver.on("/airthings_history", /->self.page_airthings_history())
     webserver.on("/airthings_history.csv", /->self.page_airthings_csv())
     webserver.on("/airthings_diagnostics", /->self.page_airthings_diagnostics())
@@ -1040,6 +1041,33 @@ class Airthings2930 : Driver
   def page_airthings_diagnostics()
     if !webserver.check_privileged_access() return nil end
     webserver.content_open(200, "application/json"); webserver.content_send(json.dump(self.diagnostic_log)); webserver.content_close()
+  end
+
+  # Canonical, read-only snapshot used by local integrations such as the
+  # SmartThings LAN Edge driver. Unlike /airthings_api this returns every
+  # paired sensor and never changes the active device or starts a BLE read.
+  def page_airthings_devices()
+    if !webserver.check_privileged_access() return nil end
+    if size(self.mac_hex) == 12 self.save_device_state() end
+    var devices = []
+    for i:0..size(self.paired_macs)-1
+      var mac = self.paired_macs[i]
+      var state = self.device_states.find(mac, {})
+      devices.push({
+        'index':i, 'mac':mac, 'name':self.paired_names[i],
+        'last':state.find('last', ''), 'temperature':state.find('temperature', nil),
+        'humidity':state.find('humidity', nil), 'pressure':state.find('pressure', nil),
+        'co2':state.find('co2', nil), 'voc':state.find('voc', nil),
+        'radon_short':state.find('radon_short', nil), 'radon_long':state.find('radon_long', nil),
+        'light':state.find('light', nil), 'battery':state.find('battery', nil),
+        'battery_mv':state.find('battery_mv', nil), 'rssi':state.find('rssi', nil),
+        'active':i == self.active_index
+      })
+    end
+    var out = {'driver_version':self.DRIVER_VERSION, 'poll':self.poll_seconds, 'devices':devices}
+    webserver.content_open(200, "application/json")
+    webserver.content_send(json.dump(out))
+    webserver.content_close()
   end
 
   def page_airthings_api()

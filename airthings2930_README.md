@@ -1,10 +1,14 @@
 # Airthings Wave Plus 2930 on Tasmota ESP32-S3
 
-Workflow version: **2.2.1**
+Workflow version: **2.3.0**
 
 This package builds and commissions a Tasmota ESP32-S3 image with Berry, BLE/MI32, Matter, and the local Airthings Wave Plus driver.
 
 The live page is `http://<device-ip>/airthings`. It includes live values and reading age, stale-data detection, sensor health, next-read countdown, persistent per-device history, CSV export, diagnostics, polling controls, unit selection, calibration, alert thresholds, Home Assistant discovery, friendly names, pairing for up to two devices, and validated configuration backup/restore.
+
+The read-only `http://<device-ip>/airthings_devices` endpoint returns canonical
+cached values for every paired monitor without changing the active sensor or
+starting a BLE read. It is used by the optional local SmartThings Edge driver.
 
 The Airthings page provides a persistent polling-time setting from 15 to 86400 seconds. The Tasmota main page shows the last-reading timestamp and next-reading countdown and provides **Read Airthings Now** and **Airthings Settings** buttons.
 
@@ -123,9 +127,9 @@ The equivalent `config.toml` values are in `codex_config.example.toml`. These ar
 
 ## Matter endpoints
 
-The workflow enables Tasmota's **Force Static endpoints (non-bridge)** mode. This suppresses the Aggregator/bridge presentation that makes SmartThings create a separate child device for every virtual sensor. SmartThings can then present the ESP32-S3 as one Matter device with multiple sensor functions without a custom Edge driver. The measurements still use separate internal Matter endpoints because each standard sensor device type has its own endpoint.
+The workflow uses Tasmota's normal Matter **bridge/Aggregator** mode. SmartThings therefore creates a separate child device for each virtual sensor endpoint. This provides the broadest display coverage available with SmartThings' built-in Matter drivers and does not require a custom Edge driver.
 
-After upgrading from an earlier release, remove the old gateway and its child devices from SmartThings, restart the ESP32-S3, and commission Matter again. Controllers cache the old bridged descriptor, so an existing pairing does not automatically change presentation.
+After upgrading from version 2.2.0 or 2.2.1, remove the existing gateway from SmartThings, run the `commission` workflow, restart the ESP32-S3 if requested, and commission Matter again. Controllers cache the previous static descriptor, so an existing pairing does not automatically return to separate child devices.
 
 SmartThings' built-in Matter profile currently exposes only the capabilities it recognizes for this mixed static-endpoint node. In observed operation it shows temperature, humidity, and Air Quality, while omitting pressure, illuminance, standalone CO2/TVOC values, and the named Radon carrier endpoints. The gateway still publishes all of those Matter attributes, as confirmed by `MtrInfo`, but adding unsupported tiles requires a custom SmartThings Edge profile.
 
@@ -175,7 +179,41 @@ If the device is in Wi-Fi Manager mode, it serves `192.168.4.1`. Supply valid Wi
 
 Logs are written under `airthings_tasmota_logs`.
 
+## Optional SmartThings LAN Edge driver
+
+The `smartthings-edge` directory provides an alternative to Matter. The Edge
+driver runs locally on a SmartThings-compatible hub and reads cached values
+from `/airthings_devices` over the LAN. Each physical Airthings monitor is
+created as one SmartThings child device containing:
+
+- Temperature, humidity, atmospheric pressure, CO2, TVOC, and illuminance.
+- Battery percentage.
+- Short-term Radon on the main component.
+- Long-term Radon on a separately labelled component of the same device.
+
+All measurements use standard SmartThings production capabilities; no custom
+capability namespace, MQTT broker, cloud relay, or Matter commissioning is
+required. Run `smartthings_edge_install.cmd`, complete the SmartThings CLI
+sign-in and hub/channel selection, scan for nearby devices, and set the ESP32
+gateway IPv4 address in the created gateway device.
+
 ## Version history
+
+### 2.3.0 — 2026-07-23
+
+- Added an optional local SmartThings LAN Edge driver.
+- Groups all measurements belonging to a physical Airthings monitor into one SmartThings child device.
+- Uses standard SmartThings capabilities for temperature, humidity, pressure, CO2, TVOC, illuminance, battery, and both Radon periods.
+- Added the read-only `/airthings_devices` API for all paired sensors without changing BLE rotation or the web page's active sensor.
+- Added `smartthings_edge_install.cmd` to package and install the driver using the official SmartThings CLI.
+- Updated the Berry runtime driver to 2.2.0.
+
+### 2.2.2 — 2026-07-23
+
+- Restored Tasmota's standard Matter bridge/Aggregator presentation.
+- Explicitly clears the persistent Force Static endpoints setting during Matter configuration.
+- Restored separate SmartThings child devices for the virtual temperature, humidity, pressure, illuminance, air-quality, and named Radon carrier endpoints.
+- Documented the required removal and recommissioning step for gateways previously paired in static mode.
 
 ### 2.2.1 — 2026-07-23
 

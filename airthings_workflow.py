@@ -5,7 +5,7 @@ import argparse, configparser, ipaddress, json, os, shutil, subprocess, sys, tim
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "2.2.1"
+VERSION = "2.3.0"
 
 def run(cmd, timeout=None, env=None):
     print("+", subprocess.list2cmdline([str(x) for x in cmd]), flush=True)
@@ -137,16 +137,15 @@ def preflight(cfg, action):
     print(f"PREFLIGHT OK (workflow {VERSION})")
 
 def configure_matter(ip):
-    # SmartThings creates separate child devices when Tasmota advertises the
-    # Aggregator/bridge endpoint. Force static endpoints so all sensor
-    # functions remain under one commissioned Matter node without an Edge
-    # driver. Existing controller pairings must be removed and recommissioned
-    # once after changing this descriptor structure.
+    # Use Tasmota's normal Matter bridge/Aggregator presentation so SmartThings
+    # creates a separate child device for every virtual sensor endpoint.
+    # Omitting the nobridge checkbox explicitly clears the persistent
+    # Force Static endpoints setting if an earlier release enabled it.
     mode_body = http_post(f"http://{ip}/matterc", {
-        "save": "1", "menable": "on", "nobridge": "on"
+        "save": "1", "menable": "on"
     })
     if "Parameter error" in mode_body:
-        raise RuntimeError("Matter static-endpoint mode rejected")
+        raise RuntimeError("Matter bridge mode rejected")
     config = {
         "2":{"type":"v_temp","name":"AT_Temp"},
         "3":{"type":"v_humidity","name":"AT_Humidity"},
@@ -165,7 +164,7 @@ def configure_matter(ip):
     }
     body = http_post(f"http://{ip}/matterc", {"config_json": json.dumps(config, separators=(",", ":"))})
     if "Parameter error" in body: raise RuntimeError("Matter configuration rejected")
-    print("MATTER CONFIG OK (static non-bridge mode)")
+    print("MATTER CONFIG OK (bridge mode; separate child devices)")
 
 def verify_http(ip, wait):
     checks = (

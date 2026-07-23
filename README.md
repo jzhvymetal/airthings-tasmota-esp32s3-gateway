@@ -13,6 +13,7 @@ An ESP32-S3 gateway for the Airthings Wave Plus 2930, built on Tasmota with Berr
 - Configurable units, calibration offsets, alert thresholds, hysteresis, and cooldown.
 - Per-device MQTT topics and optional Home Assistant MQTT discovery.
 - Separate Matter virtual endpoints for two sensors.
+- Optional local SmartThings LAN Edge driver that groups every reading from one physical Airthings monitor into one SmartThings device.
 - JSON configuration backup, validation preview, restore, and automatic schema migration.
 - Rolling diagnostics and automatic BLE retry/backoff.
 - Automated Windows patch, build, flash, commission, deploy, and verification workflows.
@@ -122,9 +123,19 @@ github_publish.cmd
 
 ## Current version
 
-Workflow version: **2.2.1**
+Workflow version: **2.3.0**
 
 The Berry runtime driver reports its own version through the local API and MQTT payload.
+
+## SmartThings Edge option
+
+The `smartthings-edge` directory contains a local LAN driver that bypasses
+Matter's device-profile limitations. It uses SmartThings' standard temperature,
+humidity, pressure, CO2, TVOC, illuminance, battery, and Radon capabilities.
+Run `smartthings_edge_install.cmd`, sign in through the SmartThings CLI, select
+the intended driver channel and hub, then scan for nearby devices in the app.
+Configure the ESP32's local IPv4 address on the gateway device. See
+[`smartthings-edge/README.md`](smartthings-edge/README.md) for details.
 
 ## License
 

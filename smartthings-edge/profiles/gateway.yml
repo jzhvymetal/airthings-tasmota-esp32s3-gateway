@@ -1,0 +1,29 @@
+name: airthings-esp32-gateway
+components:
+  - id: main
+    capabilities:
+      - id: refresh
+        version: 1
+    categories:
+      - name: AirQualityDetector
+preferences:
+  - title: "Gateway IPv4 address"
+    name: gatewayIp
+    description: "Local IPv4 address shown by the ESP32-S3/Tasmota gateway"
+    required: true
+    preferenceType: string
+    definition:
+      stringType:
+        minLength: 7
+        maxLength: 15
+        default: "192.168.1.100"
+  - title: "SmartThings refresh interval"
+    name: refreshSeconds
+    description: "How often the hub reads cached values from the gateway"
+    required: true
+    preferenceType: integer
+    definition:
+      integerType:
+        minimum: 15
+        maximum: 3600
+        default: 60

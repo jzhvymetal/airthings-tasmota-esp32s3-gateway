@@ -1,6 +1,6 @@
 # Airthings commissioning package
 
-Current workflow version: **2.2.1**
+Current workflow version: **2.3.0**
 
 This package is relocatable: every script uses its own directory as the root. Start with `airthings2930_README.md`.
 
@@ -14,3 +14,6 @@ This package is relocatable: every script uses its own directory as the root. St
 Version 2.1 adds persistent per-device history and state, friendly names, CSV export, alert hysteresis/cooldowns, health scoring, a rolling diagnostics log, compatibility/version reporting, automatic configuration migration, and validated restore preview.
 
 For details, recovery, Matter mappings, battery behavior, and no-prompt Codex options, see `airthings2930_README.md`.
+
+For the optional local SmartThings integration, run
+`smartthings_edge_install.cmd` and see `smartthings-edge/README.md`.

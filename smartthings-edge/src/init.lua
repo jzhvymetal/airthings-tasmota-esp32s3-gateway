@@ -1,0 +1,183 @@
+local Driver = require "st.driver"
+local capabilities = require "st.capabilities"
+local log = require "log"
+local cosock = require "cosock"
+local http = cosock.asyncify "socket.http"
+local ltn12 = require "ltn12"
+local json = require "dkjson"
+
+local GATEWAY_PROFILE = "airthings-esp32-gateway"
+local SENSOR_PROFILE = "airthings-wave-plus"
+local MANAGER_DNI = "airthings-esp32-ble-gateway"
+local timer_by_device = {}
+
+local function number(value)
+  local result = tonumber(value)
+  if result == nil then return nil end
+  return result
+end
+
+local function emit_if(device, capability, event)
+  if event ~= nil and device:supports_capability(capability) then
+    device:emit_event(event)
+  end
+end
+
+local function emit_sensor(sensor, values)
+  local temperature = number(values.temperature)
+  local humidity = number(values.humidity)
+  local pressure = number(values.pressure)
+  local co2 = number(values.co2)
+  local tvoc = number(values.voc)
+  local light = number(values.light)
+  local battery = number(values.battery)
+  local radon_short = number(values.radon_short)
+  local radon_long = number(values.radon_long)
+
+  if temperature then emit_if(sensor, capabilities.temperatureMeasurement,
+    capabilities.temperatureMeasurement.temperature({value=temperature, unit="C"})) end
+  if humidity then emit_if(sensor, capabilities.relativeHumidityMeasurement,
+    capabilities.relativeHumidityMeasurement.humidity(math.max(0, math.min(100, humidity)))) end
+  if pressure then emit_if(sensor, capabilities.atmosphericPressureMeasurement,
+    capabilities.atmosphericPressureMeasurement.atmosphericPressure({value=pressure / 10, unit="kPa"})) end
+  if co2 then emit_if(sensor, capabilities.carbonDioxideMeasurement,
+    capabilities.carbonDioxideMeasurement.carbonDioxide({value=co2, unit="ppm"})) end
+  if tvoc then emit_if(sensor, capabilities.tvocMeasurement,
+    capabilities.tvocMeasurement.tvocLevel({value=tvoc, unit="ppb"})) end
+  if light then emit_if(sensor, capabilities.illuminanceMeasurement,
+    capabilities.illuminanceMeasurement.illuminance(math.max(0, math.min(100000, light)))) end
+  if battery then emit_if(sensor, capabilities.battery,
+    capabilities.battery.battery(math.max(0, math.min(100, math.floor(battery + 0.5))))) end
+  if radon_short then
+    sensor:emit_component_event(sensor.profile.components.main,
+      capabilities.radonMeasurement.radonLevel({value=radon_short, unit="Bq/m^3"}))
+  end
+  if radon_long then
+    sensor:emit_component_event(sensor.profile.components.longTermRadon,
+      capabilities.radonMeasurement.radonLevel({value=radon_long, unit="Bq/m^3"}))
+  end
+  sensor:online()
+end
+
+local function find_sensor(driver, mac)
+  for _, device in ipairs(driver:get_devices()) do
+    if device.parent_assigned_child_key == mac then return device end
+  end
+  return nil
+end
+
+local function create_sensor(driver, manager, values)
+  if not values.mac or find_sensor(driver, values.mac) then return end
+  driver:try_create_device({
+    type = "EDGE_CHILD",
+    label = values.name or ("Airthings " .. values.mac),
+    profile = SENSOR_PROFILE,
+    parent_device_id = manager.id,
+    parent_assigned_child_key = values.mac,
+    vendor_provided_label = values.name or "Airthings Wave Plus",
+    manufacturer = "Airthings",
+    model = "Wave Plus 2930"
+  })
+end
+
+local function fetch_gateway(manager)
+  local ip = manager.preferences.gatewayIp
+  if not ip or ip == "" then return nil, "Gateway IP is not configured" end
+  local response = {}
+  local _, status = http.request({
+    url = "http://" .. ip .. "/airthings_devices",
+    method = "GET",
+    headers = {["Referer"] = "http://" .. ip .. "/"},
+    sink = ltn12.sink.table(response)
+  })
+  if tonumber(status) ~= 200 then return nil, "HTTP status " .. tostring(status) end
+  local data, _, err = json.decode(table.concat(response))
+  if not data then return nil, err or "Invalid JSON" end
+  return data, nil
+end
+
+local function refresh_gateway(driver, manager)
+  local data, err = fetch_gateway(manager)
+  if not data then
+    log.warn("Airthings gateway refresh failed: " .. tostring(err))
+    manager:offline()
+    return
+  end
+  manager:online()
+  for _, values in ipairs(data.devices or {}) do
+    local sensor = find_sensor(driver, values.mac)
+    if sensor then emit_sensor(sensor, values) else create_sensor(driver, manager, values) end
+  end
+end
+
+local function schedule_refresh(driver, device)
+  if timer_by_device[device.id] then device.thread:cancel_timer(timer_by_device[device.id]) end
+  local interval = tonumber(device.preferences.refreshSeconds) or 60
+  timer_by_device[device.id] = device.thread:call_on_schedule(interval, function()
+    refresh_gateway(driver, device)
+  end, "Airthings gateway refresh")
+  device.thread:call_with_delay(1, function() refresh_gateway(driver, device) end)
+end
+
+local lifecycle = {}
+
+function lifecycle.init(driver, device)
+  if device.device_network_id == MANAGER_DNI then schedule_refresh(driver, device) end
+end
+
+function lifecycle.infoChanged(driver, device, event, args)
+  if device.device_network_id == MANAGER_DNI then schedule_refresh(driver, device) end
+end
+
+function lifecycle.removed(_, device)
+  if timer_by_device[device.id] then
+    device.thread:cancel_timer(timer_by_device[device.id])
+    timer_by_device[device.id] = nil
+  end
+end
+
+local function discovery(driver)
+  for _, device in ipairs(driver:get_devices()) do
+    if device.device_network_id == MANAGER_DNI then return end
+  end
+  driver:try_create_device({
+    type = "LAN",
+    device_network_id = MANAGER_DNI,
+    label = "Airthings ESP32 Gateway",
+    profile = GATEWAY_PROFILE,
+    manufacturer = "Open source",
+    model = "Airthings Tasmota ESP32-S3 Gateway"
+  })
+end
+
+local function refresh_handler(driver, device)
+  if device.device_network_id == MANAGER_DNI then
+    refresh_gateway(driver, device)
+  elseif device.parent_device_id then
+    local parent = driver:get_device_info(device.parent_device_id)
+    if parent then refresh_gateway(driver, parent) end
+  end
+end
+
+local driver = Driver("airthings-esp32-ble-gateway", {
+  discovery = discovery,
+  lifecycle_handlers = lifecycle,
+  supported_capabilities = {
+    capabilities.temperatureMeasurement,
+    capabilities.relativeHumidityMeasurement,
+    capabilities.atmosphericPressureMeasurement,
+    capabilities.carbonDioxideMeasurement,
+    capabilities.tvocMeasurement,
+    capabilities.illuminanceMeasurement,
+    capabilities.battery,
+    capabilities.radonMeasurement,
+    capabilities.refresh
+  },
+  capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = refresh_handler
+    }
+  }
+})
+
+driver:run()
