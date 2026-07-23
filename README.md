@@ -115,6 +115,7 @@ github_publish.cmd
 ## Documentation
 
 - [Complete setup, operation, Matter mapping, recovery, and version history](airthings2930_README.md)
+- [Prebuilt firmware commissioning guide](RELEASE_COMMISSIONING.md)
 - [Package overview](README_ROOTDIR.md)
 - [Publishable settings template](airthings_settings.example.ini)
 - [Release checksums](SHA256SUMS.csv)

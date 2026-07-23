@@ -13,3 +13,7 @@ __pycache__/
 # Runtime exports
 airthings_history.json
 
+# Local GitHub release packaging
+release/
+*.zip
+
