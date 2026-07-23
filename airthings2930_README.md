@@ -1,6 +1,6 @@
 # Airthings Wave Plus 2930 on Tasmota ESP32-S3
 
-Workflow version: **2.3.0**
+Workflow version: **2.3.1**
 
 This package builds and commissions a Tasmota ESP32-S3 image with Berry, BLE/MI32, Matter, and the local Airthings Wave Plus driver.
 
@@ -194,10 +194,20 @@ created as one SmartThings child device containing:
 All measurements use standard SmartThings production capabilities; no custom
 capability namespace, MQTT broker, cloud relay, or Matter commissioning is
 required. Run `smartthings_edge_install.cmd`, complete the SmartThings CLI
-sign-in and hub/channel selection, scan for nearby devices, and set the ESP32
-gateway IPv4 address in the created gateway device.
+sign-in and hub/channel selection, and scan for nearby devices. The ESP32
+advertises `_airthings._tcp` and the Edge driver verifies `/airthings_devices`
+before creating the gateway. The optional IPv4 setting is only a fallback when
+mDNS multicast is blocked.
 
 ## Version history
+
+### 2.3.1 — 2026-07-23
+
+- Added automatic ESP32 gateway discovery using a dedicated `_airthings._tcp` mDNS service.
+- Verifies the Airthings API before creating or updating the SmartThings gateway device.
+- Retained the manual IPv4 preference only as an optional fallback for networks that block mDNS.
+- Fixed SmartThings Radon `NaN` readings by converting canonical Bq/m3 values to the capability's required pCi/L unit.
+- Verified the installed hub reports valid short-term and long-term Radon values.
 
 ### 2.3.0 — 2026-07-23
 

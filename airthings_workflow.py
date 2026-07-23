@@ -5,7 +5,7 @@ import argparse, configparser, ipaddress, json, os, shutil, subprocess, sys, tim
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "2.3.0"
+VERSION = "2.3.1"
 
 def run(cmd, timeout=None, env=None):
     print("+", subprocess.list2cmdline([str(x) for x in cmd]), flush=True)

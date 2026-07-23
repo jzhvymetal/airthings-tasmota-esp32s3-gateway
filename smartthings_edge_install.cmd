@@ -10,6 +10,6 @@ if errorlevel 1 (
   exit /b 1
 )
 echo.
-echo Driver installed. In SmartThings, scan for nearby devices and configure
-echo the Gateway IPv4 address in the Airthings ESP32 Gateway settings.
+echo Driver installed. In SmartThings, scan for nearby devices. The gateway is
+echo discovered automatically by mDNS; its IPv4 setting is only a fallback.
 endlocal

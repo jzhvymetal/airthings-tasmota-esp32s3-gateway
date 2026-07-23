@@ -123,7 +123,7 @@ github_publish.cmd
 
 ## Current version
 
-Workflow version: **2.3.0**
+Workflow version: **2.3.1**
 
 The Berry runtime driver reports its own version through the local API and MQTT payload.
 
@@ -134,7 +134,8 @@ Matter's device-profile limitations. It uses SmartThings' standard temperature,
 humidity, pressure, CO2, TVOC, illuminance, battery, and Radon capabilities.
 Run `smartthings_edge_install.cmd`, sign in through the SmartThings CLI, select
 the intended driver channel and hub, then scan for nearby devices in the app.
-Configure the ESP32's local IPv4 address on the gateway device. See
+The driver discovers the ESP32 automatically with mDNS; a manual IPv4 setting
+remains available only as a fallback. See
 [`smartthings-edge/README.md`](smartthings-edge/README.md) for details.
 
 ## License

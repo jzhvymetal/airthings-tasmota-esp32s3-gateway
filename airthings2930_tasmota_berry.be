@@ -27,7 +27,7 @@ import persist
 import json
 
 class Airthings2930 : Driver
-  static DRIVER_VERSION = "2.2.0"
+  static DRIVER_VERSION = "2.3.0"
   static CONFIG_VERSION = 3
   static SVC_UUID = "b42e1c08-ade7-11e4-89d3-123b93f75cba"
   static DATA_UUID = "b42e2a68-ade7-11e4-89d3-123b93f75cba"
@@ -54,6 +54,7 @@ class Airthings2930 : Driver
   var history_dirty, diagnostic_log, alert_states, alert_last, alert_cooldown
   var migration_status, compatibility_status
   var read_stage
+  var mdns_advertised
 
   def init()
     self.abuf = bytes(-96)
@@ -163,6 +164,7 @@ class Airthings2930 : Driver
     self.load_device_state()
     self.log_event("START", "Driver " + self.DRIVER_VERSION + "; " + self.migration_status)
     self.read_stage = "idle"
+    self.mdns_advertised = false
 
     self.conn_cbp = tasmota.gen_cb(/e,o,u,h->self.on_conn(e,o,u,h))
     BLE.conn_cb(self.conn_cbp, self.cbuf)
@@ -172,6 +174,21 @@ class Airthings2930 : Driver
     # autoexec defers this driver until BLE is initialized, which is after
     # Tasmota's normal web_add_handler lifecycle event. Register the route now.
     self.web_add_handler()
+  end
+
+  def advertise_mdns()
+    if self.mdns_advertised return nil end
+    try
+      import mdns
+      mdns.add_service("_airthings", "_tcp", 80,
+        {"path":"/airthings_devices", "version":self.DRIVER_VERSION},
+        "Airthings ESP32 Gateway")
+      self.mdns_advertised = true
+      self.log_event("START", "mDNS service _airthings._tcp advertised")
+    except .. as e, m
+      # Matter/Tasmota may still be starting the shared mDNS responder. The
+      # periodic retry below will advertise once it is ready.
+    end
   end
 
   def migrate_config()
@@ -1258,6 +1275,7 @@ class Airthings2930 : Driver
   # ---------------------------------------------------------------------------
   def every_second()
     self.uptime_seconds += 1
+    if !self.mdns_advertised && self.uptime_seconds % 10 == 0 self.advertise_mdns() end
     if self.seconds_since_read >= 0 self.seconds_since_read += 1 end
     if self.retry_wait > 0
       self.retry_wait -= 1

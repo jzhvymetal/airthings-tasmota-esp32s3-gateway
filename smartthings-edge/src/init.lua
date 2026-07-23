@@ -5,11 +5,17 @@ local cosock = require "cosock"
 local http = cosock.asyncify "socket.http"
 local ltn12 = require "ltn12"
 local json = require "dkjson"
+local mdns = require "st.mdns"
+local net_utils = require "st.net_utils"
 
 local GATEWAY_PROFILE = "airthings-esp32-gateway"
 local SENSOR_PROFILE = "airthings-wave-plus"
 local MANAGER_DNI = "airthings-esp32-ble-gateway"
 local timer_by_device = {}
+
+local function is_manager(device)
+  return device.device_network_id:sub(1, #MANAGER_DNI) == MANAGER_DNI
+end
 
 local function number(value)
   local result = tonumber(value)
@@ -50,11 +56,11 @@ local function emit_sensor(sensor, values)
     capabilities.battery.battery(math.max(0, math.min(100, math.floor(battery + 0.5))))) end
   if radon_short then
     sensor:emit_component_event(sensor.profile.components.main,
-      capabilities.radonMeasurement.radonLevel({value=radon_short, unit="Bq/m^3"}))
+      capabilities.radonMeasurement.radonLevel({value=radon_short / 37, unit="pCi/L"}))
   end
   if radon_long then
     sensor:emit_component_event(sensor.profile.components.longTermRadon,
-      capabilities.radonMeasurement.radonLevel({value=radon_long, unit="Bq/m^3"}))
+      capabilities.radonMeasurement.radonLevel({value=radon_long / 37, unit="pCi/L"}))
   end
   sensor:online()
 end
@@ -80,9 +86,7 @@ local function create_sensor(driver, manager, values)
   })
 end
 
-local function fetch_gateway(manager)
-  local ip = manager.preferences.gatewayIp
-  if not ip or ip == "" then return nil, "Gateway IP is not configured" end
+local function fetch_ip(ip)
   local response = {}
   local _, status = http.request({
     url = "http://" .. ip .. "/airthings_devices",
@@ -94,6 +98,22 @@ local function fetch_gateway(manager)
   local data, _, err = json.decode(table.concat(response))
   if not data then return nil, err or "Invalid JSON" end
   return data, nil
+end
+
+local function gateway_ip(manager)
+  local discovered = manager:get_field("gateway_ip")
+  if discovered and discovered ~= "" then return discovered end
+  local dni_ip = manager.device_network_id:match("|([%d%.]+)$")
+  if dni_ip then return dni_ip end
+  local configured = manager.preferences.gatewayIp
+  if configured and configured ~= "" then return configured end
+  return nil
+end
+
+local function fetch_gateway(manager)
+  local ip = gateway_ip(manager)
+  if not ip then return nil, "Gateway was not discovered and no fallback IP is configured" end
+  return fetch_ip(ip)
 end
 
 local function refresh_gateway(driver, manager)
@@ -122,11 +142,11 @@ end
 local lifecycle = {}
 
 function lifecycle.init(driver, device)
-  if device.device_network_id == MANAGER_DNI then schedule_refresh(driver, device) end
+  if is_manager(device) then schedule_refresh(driver, device) end
 end
 
 function lifecycle.infoChanged(driver, device, event, args)
-  if device.device_network_id == MANAGER_DNI then schedule_refresh(driver, device) end
+  if is_manager(device) then schedule_refresh(driver, device) end
 end
 
 function lifecycle.removed(_, device)
@@ -137,21 +157,43 @@ function lifecycle.removed(_, device)
 end
 
 local function discovery(driver)
+  local manager = nil
   for _, device in ipairs(driver:get_devices()) do
-    if device.device_network_id == MANAGER_DNI then return end
+    if is_manager(device) then manager = device end
   end
-  driver:try_create_device({
-    type = "LAN",
-    device_network_id = MANAGER_DNI,
-    label = "Airthings ESP32 Gateway",
-    profile = GATEWAY_PROFILE,
-    manufacturer = "Open source",
-    model = "Airthings Tasmota ESP32-S3 Gateway"
-  })
+  local responses, err = mdns.discover("_airthings._tcp", "local")
+  if not responses then
+    log.warn("Airthings mDNS discovery failed: " .. tostring(err))
+    return
+  end
+  for _, found in ipairs(responses.found or {}) do
+    local ip = found.host_info and found.host_info.address
+    if ip and net_utils.validate_ipv4_string(ip) then
+      local data = fetch_ip(ip)
+      if data and data.driver_version and data.devices then
+        if manager then
+          manager:set_field("gateway_ip", ip, {persist=true})
+          manager:online()
+          refresh_gateway(driver, manager)
+        else
+          driver:try_create_device({
+            type = "LAN",
+            device_network_id = MANAGER_DNI .. "|" .. ip,
+            label = "Airthings ESP32 Gateway",
+            profile = GATEWAY_PROFILE,
+            manufacturer = "Open source",
+            model = "Airthings Tasmota ESP32-S3 Gateway"
+          })
+        end
+        return
+      end
+    end
+  end
+  log.warn("No verified Airthings ESP32 gateway found by mDNS")
 end
 
 local function refresh_handler(driver, device)
-  if device.device_network_id == MANAGER_DNI then
+  if is_manager(device) then
     refresh_gateway(driver, device)
   elseif device.parent_device_id then
     local parent = driver:get_device_info(device.parent_device_id)

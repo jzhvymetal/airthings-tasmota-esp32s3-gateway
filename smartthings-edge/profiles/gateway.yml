@@ -10,13 +10,12 @@ preferences:
   - title: "Gateway IPv4 address"
     name: gatewayIp
     description: "Local IPv4 address shown by the ESP32-S3/Tasmota gateway"
-    required: true
+    required: false
     preferenceType: string
     definition:
       stringType: text
-      minLength: 7
       maxLength: 15
-      default: "192.168.1.100"
+      default: ""
   - title: "SmartThings refresh interval"
     name: refreshSeconds
     description: "How often the hub reads cached values from the gateway"
