@@ -1,6 +1,6 @@
 # Airthings Tasmota ESP32-S3 Gateway — Firmware Commissioning
 
-Release: **v2.3.1**
+Release: **v2.4.0**
 
 This archive contains ready-built Tasmota ESP32-S3 firmware plus the current Airthings Wave Plus 2930 Berry driver and commissioning tools.
 
@@ -14,6 +14,7 @@ This archive contains ready-built Tasmota ESP32-S3 firmware plus the current Air
 - `airthings_standalone.cmd` and supporting Python files — commissioning and verification workflow
 - `smartthings-edge/` — optional local SmartThings LAN Edge driver
 - `smartthings_edge_install.cmd` — packages and installs the Edge driver using the official SmartThings CLI
+- `smartthings-edge-v2.4.0.zip` — prebuilt source package for the optional Edge driver
 - `RELEASE_SHA256SUMS.txt` — SHA-256 checksums for files in the archive
 
 ## Requirements
@@ -32,6 +33,10 @@ python -m pip install --upgrade esptool pyserial
 ```
 
 Determine the ESP32-S3 COM port in Windows Device Manager under **Ports (COM & LPT)**.
+
+For an existing installation, first follow
+[`BACKUP_AND_MIGRATION.md`](BACKUP_AND_MIGRATION.md). Prefer preserve mode
+unless a clean factory recovery is required.
 
 ## 1. Create the private settings file
 
@@ -138,14 +143,15 @@ Radon together.
 
 Run:
 
-```cmd
-smartthings_edge_install.cmd
-```
+Open the
+[shared SmartThings channel invitation](https://bestow-regional.api.smartthings.com/invite/1J2QymxnWw20),
+enroll the hub, and install **Airthings ESP32 Gateway** under **Available
+Drivers**. Then use **Scan nearby** in the SmartThings app. The ESP32 advertises
+`_airthings._tcp` and is discovered automatically. The manual IPv4 preference
+is only a fallback for networks that block mDNS.
 
-Complete the SmartThings CLI login and hub/channel selection, then use **Scan
-nearby** in the SmartThings app. The ESP32 advertises `_airthings._tcp` and is
-discovered automatically. The manual IPv4 preference is only a fallback for
-networks that block mDNS.
+Driver developers can instead run `smartthings_edge_install.cmd` from the
+source repository.
 
 ## Fast driver-only updates
 
@@ -173,3 +179,6 @@ Get-FileHash -Algorithm SHA256 *.bin
 ```
 
 Compare the displayed firmware hashes with the manifest before flashing.
+
+For additional discovery, stale-reading, Radon, duplicate-device, and recovery
+help, see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).

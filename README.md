@@ -2,7 +2,14 @@
 
 An ESP32-S3 gateway for the Airthings Wave Plus 2930, built on Tasmota with Berry, BLE/MI32, MQTT, Home Assistant discovery, and Matter.
 
-![Airthings gateway web interface](airthings_page_preview.png)
+[![Validate](https://github.com/jzhvymetal/airthings-tasmota-esp32s3-gateway/actions/workflows/validate.yml/badge.svg)](https://github.com/jzhvymetal/airthings-tasmota-esp32s3-gateway/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## Screenshots
+
+| Local gateway dashboard | One-device SmartThings Edge presentation |
+|---|---|
+| <img src="airthings_page_preview.png" alt="Airthings gateway web interface" width="520"> | <img src="SmartThingsApp.jpg" alt="Airthings measurements displayed in SmartThings" width="260"> |
 
 ## Features
 
@@ -14,6 +21,7 @@ An ESP32-S3 gateway for the Airthings Wave Plus 2930, built on Tasmota with Berr
 - Per-device MQTT topics and optional Home Assistant MQTT discovery.
 - Separate Matter virtual endpoints for two sensors.
 - Optional local SmartThings LAN Edge driver that groups every reading from one physical Airthings monitor into one SmartThings device.
+- SmartThings connectivity health, stale-sensor offline state, and installed Berry/Edge version reporting.
 - JSON configuration backup, validation preview, restore, and automatic schema migration.
 - Rolling diagnostics and automatic BLE retry/backoff.
 - Automated Windows patch, build, flash, commission, deploy, and verification workflows.
@@ -120,10 +128,15 @@ github_publish.cmd
 - [Package overview](README_ROOTDIR.md)
 - [Publishable settings template](airthings_settings.example.ini)
 - [Release checksums](SHA256SUMS.csv)
+- [Compatibility matrix](COMPATIBILITY.md)
+- [Troubleshooting](TROUBLESHOOTING.md)
+- [Backup, upgrade, and recovery](BACKUP_AND_MIGRATION.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 
 ## Current version
 
-Workflow version: **2.3.1**
+Workflow version: **2.4.0**
 
 The Berry runtime driver reports its own version through the local API and MQTT payload.
 
@@ -142,10 +155,19 @@ The driver discovers the ESP32 automatically with mDNS; a manual IPv4 setting
 remains available only as a fallback. See
 [`smartthings-edge/README.md`](smartthings-edge/README.md) for details.
 
-### SmartThings app
+## Automated validation and releases
 
-<img src="SmartThingsApp.jpg" alt="Airthings measurements displayed as one device in the SmartThings app" width="360">
+Every push and pull request validates versions, profiles, documentation links,
+checksums, Python syntax, and SmartThings Lua syntax. Maintainers can prepare a
+versioned ZIP and firmware assets with:
+
+```bat
+release.cmd 2.4.0 "Release summary"
+```
+
+Add `--publish` to commit, tag, push, and create the GitHub release after
+reviewing the prepared files.
 
 ## License
 
-No license has been selected yet. Until a license is added, normal copyright restrictions apply.
+Released under the [MIT License](LICENSE).

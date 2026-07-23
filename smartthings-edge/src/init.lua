@@ -11,6 +11,7 @@ local net_utils = require "st.net_utils"
 local GATEWAY_PROFILE = "airthings-esp32-gateway"
 local SENSOR_PROFILE = "airthings-wave-plus"
 local MANAGER_DNI = "airthings-esp32-ble-gateway"
+local EDGE_DRIVER_VERSION = "2.4.0"
 local timer_by_device = {}
 
 local function is_manager(device)
@@ -62,7 +63,7 @@ local function emit_sensor(sensor, values)
     sensor:emit_component_event(sensor.profile.components.longTermRadon,
       capabilities.radonMeasurement.radonLevel({value=radon_long / 37, unit="pCi/L"}))
   end
-  sensor:online()
+  if values.stale == true then sensor:offline() else sensor:online() end
 end
 
 local function find_sensor(driver, mac)
@@ -124,6 +125,13 @@ local function refresh_gateway(driver, manager)
     return
   end
   manager:online()
+  manager:set_field("last_lan_refresh", os.date("!%Y-%m-%dT%H:%M:%SZ"), {persist=true})
+  manager:set_field("gateway_driver_version", tostring(data.driver_version or "unknown"), {persist=true})
+  manager:try_update_metadata({
+    manufacturer = "Airthings Tasmota open-source gateway",
+    model = "Berry " .. tostring(data.driver_version or "unknown") .. " / Edge " .. EDGE_DRIVER_VERSION,
+    vendor_provided_label = "Airthings ESP32 Gateway"
+  })
   for _, values in ipairs(data.devices or {}) do
     local sensor = find_sensor(driver, values.mac)
     if sensor then emit_sensor(sensor, values) else create_sensor(driver, manager, values) end
@@ -181,8 +189,9 @@ local function discovery(driver)
             device_network_id = MANAGER_DNI .. "|" .. ip,
             label = "Airthings ESP32 Gateway",
             profile = GATEWAY_PROFILE,
-            manufacturer = "Open source",
-            model = "Airthings Tasmota ESP32-S3 Gateway"
+            manufacturer = "Airthings Tasmota open-source gateway",
+            model = "Berry " .. tostring(data.driver_version) .. " / Edge " .. EDGE_DRIVER_VERSION,
+            vendor_provided_label = "Airthings ESP32 Gateway"
           })
         end
         return
@@ -201,6 +210,10 @@ local function refresh_handler(driver, device)
   end
 end
 
+local function health_ping_handler(driver, device)
+  refresh_handler(driver, device)
+end
+
 local driver = Driver("airthings-esp32-ble-gateway", {
   discovery = discovery,
   lifecycle_handlers = lifecycle,
@@ -213,11 +226,15 @@ local driver = Driver("airthings-esp32-ble-gateway", {
     capabilities.illuminanceMeasurement,
     capabilities.battery,
     capabilities.radonMeasurement,
-    capabilities.refresh
+    capabilities.refresh,
+    capabilities.healthCheck
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh_handler
+    },
+    [capabilities.healthCheck.ID] = {
+      [capabilities.healthCheck.commands.ping.NAME] = health_ping_handler
     }
   }
 })

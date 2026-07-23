@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible gateway, workflow, or integration problem
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: checkboxes
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, tokens, hub/device IDs, and private network information.
+          required: true
+  - type: input
+    attributes:
+      label: Release version
+      placeholder: "2.4.0"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Hardware and integrations
+      description: ESP32-S3 board, Airthings model, SmartThings hub, Matter controller, MQTT/Home Assistant as applicable.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Sanitized diagnostics

@@ -27,7 +27,7 @@ import persist
 import json
 
 class Airthings2930 : Driver
-  static DRIVER_VERSION = "2.3.0"
+  static DRIVER_VERSION = "2.4.0"
   static CONFIG_VERSION = 3
   static SVC_UUID = "b42e1c08-ade7-11e4-89d3-123b93f75cba"
   static DATA_UUID = "b42e2a68-ade7-11e4-89d3-123b93f75cba"
@@ -281,7 +281,8 @@ class Airthings2930 : Driver
   end
 
   def save_device_state()
-    self.device_states[self.mac_hex] = {'last':self.last_read_text, 'age':self.seconds_since_read,
+    self.device_states[self.mac_hex] = {'last':self.last_read_text, 'last_epoch':self.last_read_epoch,
+      'age':self.seconds_since_read,
       'temperature':self.temperature, 'humidity':self.humidity, 'pressure':self.pressure, 'co2':self.co2,
       'voc':self.voc, 'radon_short':self.radon_short, 'radon_long':self.radon_long, 'light':self.light_raw,
       'battery':self.battery, 'battery_mv':self.battery_mv, 'rssi':self.last_rssi}
@@ -1070,9 +1071,16 @@ class Airthings2930 : Driver
     for i:0..size(self.paired_macs)-1
       var mac = self.paired_macs[i]
       var state = self.device_states.find(mac, {})
+      var age = state.find('age', -1)
+      var last_epoch = state.find('last_epoch', nil)
+      if last_epoch != nil
+        age = tasmota.rtc('local') - last_epoch
+      end
       devices.push({
         'index':i, 'mac':mac, 'name':self.paired_names[i],
-        'last':state.find('last', ''), 'temperature':state.find('temperature', nil),
+        'last':state.find('last', ''), 'age_seconds':age,
+        'stale':age < 0 || age > self.poll_seconds * 2,
+        'temperature':state.find('temperature', nil),
         'humidity':state.find('humidity', nil), 'pressure':state.find('pressure', nil),
         'co2':state.find('co2', nil), 'voc':state.find('voc', nil),
         'radon_short':state.find('radon_short', nil), 'radon_long':state.find('radon_long', nil),
@@ -1081,7 +1089,9 @@ class Airthings2930 : Driver
         'active':i == self.active_index
       })
     end
-    var out = {'driver_version':self.DRIVER_VERSION, 'poll':self.poll_seconds, 'devices':devices}
+    var out = {'driver_version':self.DRIVER_VERSION, 'poll':self.poll_seconds,
+      'gateway_status':self.status, 'gateway_uptime_seconds':self.uptime_seconds,
+      'devices':devices}
     webserver.content_open(200, "application/json")
     webserver.content_send(json.dump(out))
     webserver.content_close()

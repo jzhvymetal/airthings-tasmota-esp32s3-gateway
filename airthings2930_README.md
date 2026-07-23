@@ -207,6 +207,15 @@ hub/channel selection.
 
 ## Version history
 
+### 2.4.0 — 2026-07-23
+
+- Added SmartThings gateway and sensor health monitoring with stale-reading offline state.
+- Reports Berry and Edge-driver versions in the SmartThings gateway device information.
+- Added the shared Edge-driver channel invitation and SmartThings app screenshot.
+- Added an MIT license, compatibility matrix, troubleshooting, backup/migration, contribution, and security documentation.
+- Added GitHub issue and pull-request templates.
+- Added automated GitHub validation and one-command release preparation/publishing.
+
 ### 2.3.1 — 2026-07-23
 
 - Added automatic ESP32 gateway discovery using a dedicated `_airthings._tcp` mDNS service.

@@ -21,6 +21,8 @@ components:
         version: 1
       - id: refresh
         version: 1
+      - id: healthCheck
+        version: 1
     categories:
       - name: AirQualityDetector
   - id: longTermRadon

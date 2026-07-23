@@ -37,6 +37,14 @@ address locally and follows future DHCP address changes after another scan.
 The Edge refresh interval only reads cached values over the LAN. It does not
 control the BLE polling interval configured on the Airthings web page.
 
+The gateway and sensor profiles opt in to SmartThings health monitoring. A
+failed LAN request marks the gateway and its children offline; a sensor whose
+cached BLE reading is older than twice the configured BLE polling interval is
+also marked offline. A successful refresh restores online status. Gateway
+device information reports the installed Berry and Edge-driver versions, while
+the driver stores the last successful LAN refresh time in its persistent local
+state.
+
 SmartThings' standard Radon capability accepts only pCi/L. The driver converts
 the gateway's canonical Bq/m3 values using `pCi/L = Bq/m3 / 37`.
 

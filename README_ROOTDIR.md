@@ -1,6 +1,6 @@
 # Airthings commissioning package
 
-Current workflow version: **2.3.1**
+Current workflow version: **2.4.0**
 
 This package is relocatable: every script uses its own directory as the root. Start with `airthings2930_README.md`.
 
@@ -11,9 +11,14 @@ This package is relocatable: every script uses its own directory as the root. St
 5. With Codex, run `airthings_with_codex.cmd` (the legacy `01_RUN_CODEX_AIRTHINGS.cmd` redirects there).
 6. To publish or update a GitHub repository safely, run `github_publish.cmd`.
 
-Version 2.1 adds persistent per-device history and state, friendly names, CSV export, alert hysteresis/cooldowns, health scoring, a rolling diagnostics log, compatibility/version reporting, automatic configuration migration, and validated restore preview.
+Version 2.4 adds SmartThings health/version reporting, shared driver
+installation, public-project safeguards, repository validation, and automated
+release packaging.
 
 For details, recovery, Matter mappings, battery behavior, and no-prompt Codex options, see `airthings2930_README.md`.
+
+Also see `COMPATIBILITY.md`, `TROUBLESHOOTING.md`, and
+`BACKUP_AND_MIGRATION.md` before deploying to a new board or hub.
 
 For the optional local SmartThings integration, run
 `smartthings_edge_install.cmd` and see `smartthings-edge/README.md`.
