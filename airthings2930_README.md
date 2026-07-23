@@ -193,11 +193,17 @@ created as one SmartThings child device containing:
 
 All measurements use standard SmartThings production capabilities; no custom
 capability namespace, MQTT broker, cloud relay, or Matter commissioning is
-required. Run `smartthings_edge_install.cmd`, complete the SmartThings CLI
-sign-in and hub/channel selection, and scan for nearby devices. The ESP32
-advertises `_airthings._tcp` and the Edge driver verifies `/airthings_devices`
-before creating the gateway. The optional IPv4 setting is only a fallback when
-mDNS multicast is blocked.
+required. For a normal installation, open the
+[shared Edge-driver invitation](https://bestow-regional.api.smartthings.com/invite/1J2QymxnWw20),
+sign in, enroll the intended hub, install the driver under **Available
+Drivers**, and use **Scan nearby** in the SmartThings app. The ESP32 advertises
+`_airthings._tcp` and the Edge driver verifies `/airthings_devices` before
+creating the gateway. The optional IPv4 setting is only a fallback when mDNS
+multicast is blocked.
+
+Developers changing the driver source can instead run
+`smartthings_edge_install.cmd` and complete the SmartThings CLI sign-in and
+hub/channel selection.
 
 ## Version history
 

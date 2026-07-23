@@ -132,11 +132,19 @@ The Berry runtime driver reports its own version through the local API and MQTT 
 The `smartthings-edge` directory contains a local LAN driver that bypasses
 Matter's device-profile limitations. It uses SmartThings' standard temperature,
 humidity, pressure, CO2, TVOC, illuminance, battery, and Radon capabilities.
-Run `smartthings_edge_install.cmd`, sign in through the SmartThings CLI, select
-the intended driver channel and hub, then scan for nearby devices in the app.
+
+[Install the Airthings ESP32 Gateway Edge driver](https://bestow-regional.api.smartthings.com/invite/1J2QymxnWw20),
+sign in with the Samsung account that owns the hub, enroll the hub, select
+**Available Drivers**, and install the driver. Then open the SmartThings app,
+choose **Add device**, and use **Scan nearby**.
+
 The driver discovers the ESP32 automatically with mDNS; a manual IPv4 setting
 remains available only as a fallback. See
 [`smartthings-edge/README.md`](smartthings-edge/README.md) for details.
+
+### SmartThings app
+
+<img src="SmartThingsApp.jpg" alt="Airthings measurements displayed as one device in the SmartThings app" width="360">
 
 ## License
 
