@@ -1,0 +1,6 @@
+{
+  "name": "Airthings ESP32 Gateway",
+  "description": "Development channel for the Airthings ESP32 BLE Gateway Edge driver",
+  "termsOfServiceUrl": "https://github.com/jzhvymetal/airthings-tasmota-esp32s3-gateway",
+  "type": "DRIVER"
+}

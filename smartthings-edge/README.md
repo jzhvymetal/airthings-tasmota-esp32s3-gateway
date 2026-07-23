@@ -14,7 +14,8 @@ radon, and long-term radon.
    `smartthings edge:drivers:package smartthings-edge`
 
 3. Create or select a driver channel, assign the packaged driver, enroll the
-   intended hub, and install the driver.
+   intended hub, and install the driver. `channel.json` contains a ready-to-use
+   channel definition if the account does not have a private channel yet.
 4. In the SmartThings app, scan for nearby devices. Open **Airthings ESP32
    Gateway**, set **Gateway IPv4 address** to the Tasmota address, and save.
 5. Pull to refresh. One child device is created for every sensor returned by

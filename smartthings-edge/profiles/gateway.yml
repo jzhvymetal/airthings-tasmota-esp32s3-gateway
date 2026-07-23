@@ -13,17 +13,16 @@ preferences:
     required: true
     preferenceType: string
     definition:
-      stringType:
-        minLength: 7
-        maxLength: 15
-        default: "192.168.1.100"
+      stringType: text
+      minLength: 7
+      maxLength: 15
+      default: "192.168.1.100"
   - title: "SmartThings refresh interval"
     name: refreshSeconds
     description: "How often the hub reads cached values from the gateway"
     required: true
     preferenceType: integer
     definition:
-      integerType:
-        minimum: 15
-        maximum: 3600
-        default: 60
+      minimum: 15
+      maximum: 3600
+      default: 60
