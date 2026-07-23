@@ -1,6 +1,6 @@
 # Airthings Tasmota ESP32-S3 Gateway — Firmware Commissioning
 
-Release: **v2.1.1**
+Release: **v2.3.1**
 
 This archive contains ready-built Tasmota ESP32-S3 firmware plus the current Airthings Wave Plus 2930 Berry driver and commissioning tools.
 
@@ -12,6 +12,8 @@ This archive contains ready-built Tasmota ESP32-S3 firmware plus the current Air
 - `autoexec.be` — loads the driver after BLE initialization
 - `airthings_settings.example.ini` — sanitized settings template
 - `airthings_standalone.cmd` and supporting Python files — commissioning and verification workflow
+- `smartthings-edge/` — optional local SmartThings LAN Edge driver
+- `smartthings_edge_install.cmd` — packages and installs the Edge driver using the official SmartThings CLI
 - `RELEASE_SHA256SUMS.txt` — SHA-256 checksums for files in the archive
 
 ## Requirements
@@ -126,6 +128,24 @@ The first Airthings read can take several seconds. Battery data uses a second op
 Open the Tasmota main page and select **Configure Matter**. Use the displayed pairing code or QR code in the preferred Matter controller.
 
 The first Airthings device uses Matter endpoints 2–8. A second paired Airthings device uses endpoints 9–15. Radon values use clearly named virtual pressure endpoints because this Tasmota Matter build does not expose a native virtual Radon update attribute.
+
+## 6. Optional SmartThings Edge installation
+
+The Edge driver is an alternative to Matter for SmartThings. It creates one
+SmartThings device per physical Airthings monitor and displays temperature,
+humidity, pressure, CO2, TVOC, light, battery, short-term Radon, and long-term
+Radon together.
+
+Run:
+
+```cmd
+smartthings_edge_install.cmd
+```
+
+Complete the SmartThings CLI login and hub/channel selection, then use **Scan
+nearby** in the SmartThings app. The ESP32 advertises `_airthings._tcp` and is
+discovered automatically. The manual IPv4 preference is only a fallback for
+networks that block mDNS.
 
 ## Fast driver-only updates
 
