@@ -122,7 +122,7 @@ github_publish.cmd
 
 ## Current version
 
-Workflow version: **2.1.1**
+Workflow version: **2.2.0**
 
 The Berry runtime driver reports its own version through the local API and MQTT payload.
 

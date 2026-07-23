@@ -1,6 +1,6 @@
 # Airthings commissioning package
 
-Current workflow version: **2.1.1**
+Current workflow version: **2.2.0**
 
 This package is relocatable: every script uses its own directory as the root. Start with `airthings2930_README.md`.
 

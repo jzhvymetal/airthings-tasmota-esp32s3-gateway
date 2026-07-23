@@ -1,6 +1,6 @@
 # Airthings Wave Plus 2930 on Tasmota ESP32-S3
 
-Workflow version: **2.1.1**
+Workflow version: **2.2.0**
 
 This package builds and commissions a Tasmota ESP32-S3 image with Berry, BLE/MI32, Matter, and the local Airthings Wave Plus driver.
 
@@ -123,6 +123,10 @@ The equivalent `config.toml` values are in `codex_config.example.toml`. These ar
 
 ## Matter endpoints
 
+The workflow enables Tasmota's **Force Static endpoints (non-bridge)** mode. This suppresses the Aggregator/bridge presentation that makes SmartThings create a separate child device for every virtual sensor. SmartThings can then present the ESP32-S3 as one Matter device with multiple sensor functions without a custom Edge driver. The measurements still use separate internal Matter endpoints because each standard sensor device type has its own endpoint.
+
+After upgrading from an earlier release, remove the old gateway and its child devices from SmartThings, restart the ESP32-S3, and commission Matter again. Controllers cache the old bridged descriptor, so an existing pairing does not automatically change presentation.
+
 Commissioning creates these persistent virtual endpoints:
 
 | Endpoint | Name | Type | Airthings value |
@@ -170,6 +174,13 @@ If the device is in Wi-Fi Manager mode, it serves `192.168.4.1`. Supply valid Wi
 Logs are written under `airthings_tasmota_logs`.
 
 ## Version history
+
+### 2.2.0 — 2026-07-23
+
+- Enabled Tasmota Force Static endpoints (non-bridge) during Matter configuration.
+- Suppressed the Matter Aggregator/bridge presentation so SmartThings can group the gateway's standard sensor endpoints under one Matter device without a custom Edge driver.
+- Retained separate internal endpoints and all existing temperature, humidity, pressure, light, air-quality, and Radon updates.
+- Documented the required one-time SmartThings removal and recommissioning step.
 
 ### 2.1.1 — 2026-07-23
 
