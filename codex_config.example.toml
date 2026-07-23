@@ -1,0 +1,4 @@
+# Copy to .codex/config.toml only in a controlled, trusted workspace.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+

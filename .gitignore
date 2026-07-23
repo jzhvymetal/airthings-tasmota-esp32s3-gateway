@@ -1,0 +1,15 @@
+# Private device and network configuration
+airthings_settings.ini
+
+# Generated source, logs, and Python cache
+Tasmota/
+airthings_tasmota_logs/
+__pycache__/
+*.pyc
+
+# Built firmware belongs in GitHub Releases
+*.bin
+
+# Runtime exports
+airthings_history.json
+
