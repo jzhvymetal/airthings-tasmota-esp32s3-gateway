@@ -223,6 +223,16 @@ class Airthings2930 : Driver
     return "Offline"
   end
 
+  def matter_air_quality()
+    if self.co2 == nil return 0 end
+    if self.co2 <= 750 return 1 end
+    if self.co2 <= 1000 return 2 end
+    if self.co2 <= 1250 return 3 end
+    if self.co2 <= 1500 return 4 end
+    if self.co2 <= 1750 return 5 end
+    return 6
+  end
+
   def load_history_file()
     try
       var f = open("/airthings_history.json", "r")
@@ -866,7 +876,7 @@ class Airthings2930 : Driver
       tasmota.cmd("MtrUpdate {\"Name\":\"" + prefix + "Light\",\"Illuminance\":" + str(self.light_raw) + "}")
     end
     if self.co2 != nil && self.voc != nil
-      tasmota.cmd("MtrUpdate {\"Name\":\"" + prefix + "AirQuality\",\"CO2\":" + str(self.co2) + ",\"TVOC\":" + str(self.voc) + "}")
+      tasmota.cmd("MtrUpdate {\"Name\":\"" + prefix + "AirQuality\",\"AirQuality\":" + str(self.matter_air_quality()) + ",\"CO2\":" + str(self.co2) + ",\"TVOC\":" + str(self.voc) + "}")
     end
 
     # Workaround until Tasmota Matter has a direct Radon MtrUpdate attribute.

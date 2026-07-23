@@ -1,6 +1,6 @@
 # Airthings Wave Plus 2930 on Tasmota ESP32-S3
 
-Workflow version: **2.2.0**
+Workflow version: **2.2.1**
 
 This package builds and commissions a Tasmota ESP32-S3 image with Berry, BLE/MI32, Matter, and the local Airthings Wave Plus driver.
 
@@ -127,6 +127,8 @@ The workflow enables Tasmota's **Force Static endpoints (non-bridge)** mode. Thi
 
 After upgrading from an earlier release, remove the old gateway and its child devices from SmartThings, restart the ESP32-S3, and commission Matter again. Controllers cache the old bridged descriptor, so an existing pairing does not automatically change presentation.
 
+SmartThings' built-in Matter profile currently exposes only the capabilities it recognizes for this mixed static-endpoint node. In observed operation it shows temperature, humidity, and Air Quality, while omitting pressure, illuminance, standalone CO2/TVOC values, and the named Radon carrier endpoints. The gateway still publishes all of those Matter attributes, as confirmed by `MtrInfo`, but adding unsupported tiles requires a custom SmartThings Edge profile.
+
 Commissioning creates these persistent virtual endpoints:
 
 | Endpoint | Name | Type | Airthings value |
@@ -174,6 +176,12 @@ If the device is in Wi-Fi Manager mode, it serves `192.168.4.1`. Supply valid Wi
 Logs are written under `airthings_tasmota_logs`.
 
 ## Version history
+
+### 2.2.1 — 2026-07-23
+
+- Added an explicit Matter AirQuality enum to every Air Quality endpoint update instead of relying only on Tasmota's CO2-derived shadow calculation.
+- Uses the Matter scale Unknown, Good, Fair, Moderate, Poor, Very Poor, and Extremely Poor derived from CO2 thresholds.
+- Documented the capabilities omitted by SmartThings' built-in Matter presentation when no custom Edge driver is used.
 
 ### 2.2.0 — 2026-07-23
 
